@@ -17,9 +17,29 @@ TDGL provides a declarative syntax for defining test data requirements, enabling
 
 ## Installation
 
+### For Users
+
 ```bash
 pip install testdatagen
 ```
+
+### For Developers
+
+We provide setup scripts to help you set up your development environment:
+
+```bash
+# For Linux
+./dev-setup/setup-linux.sh
+
+# For macOS
+./dev-setup/setup-macos.sh
+
+# For Windows (PowerShell)
+.\dev-setup\setup-windows.ps1
+```
+
+For more detailed instructions, see the [Development Setup Guide](./dev-setup/README.md).
+
 
 ## Quick Start
 
