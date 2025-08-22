@@ -10,11 +10,9 @@ This directory contains scripts and configuration files to help you set up your 
 - Java Runtime Environment (JRE) for ANTLR4 parser generation
 - Git
 
-## Setup Options
+## Setup Instructions
 
-Choose one of the following setup methods based on your operating system and preferences:
-
-### Option 1: Setup with uv
+### Setup with uv
 
 [uv](https://github.com/astral-sh/uv) is a fast Python package installer and resolver that doesn't require virtual environment activation.
 
@@ -33,22 +31,6 @@ chmod +x dev-setup/setup.sh
 ```powershell
 # Run the setup script in PowerShell
 .\dev-setup\setup.ps1
-```
-
-### Option 2: Docker Setup
-
-If you prefer to use Docker for development:
-
-```bash
-# Build and start the Docker container
-cd dev-setup
-docker-compose up -d
-
-# Enter the container
-docker-compose exec testdatagen bash
-
-# Inside the container, you can run commands like:
-testdatagen validate examples/basic/simple_table.tdg
 ```
 
 ## What the Setup Scripts Do

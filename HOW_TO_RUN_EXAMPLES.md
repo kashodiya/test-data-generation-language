@@ -23,24 +23,17 @@ If you're using OpenHands, the setup will be performed automatically when the re
 
 ### Development Environment Setup
 
-For setting up your development environment, please refer to the detailed instructions in the `dev-setup/README.md` file. The dev-setup directory contains scripts for different operating systems and a Docker option:
+For setting up your development environment, please refer to the detailed instructions in the `dev-setup/README.md` file. The dev-setup directory contains setup scripts for different operating systems:
 
-1. **Setup with uv**:
-   - For Linux/macOS:
-     ```bash
-     ./dev-setup/setup.sh
-     ```
-   - For Windows:
-     ```powershell
-     .\dev-setup\setup.ps1
-     ```
-
-2. **Docker Setup**:
-   ```bash
-   cd dev-setup
-   docker-compose up -d
-   docker-compose exec testdatagen bash
-   ```
+**Setup with uv**:
+- For Linux/macOS:
+  ```bash
+  ./dev-setup/setup.sh
+  ```
+- For Windows:
+  ```powershell
+  .\dev-setup\setup.ps1
+  ```
 
 These setup scripts will:
 - Check for required dependencies (Python, Java)
