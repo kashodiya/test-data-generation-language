@@ -21,51 +21,40 @@ cd test-data-generation-language
 
 If you're using OpenHands, the setup will be performed automatically when the repository is cloned.
 
-### Manual Setup
+### Development Environment Setup
 
-If you're not using OpenHands, follow these steps:
+For setting up your development environment, please refer to the detailed instructions in the `dev-setup/README.md` file. The dev-setup directory contains scripts for different operating systems and a Docker option:
 
-1. Install Java (required for ANTLR4):
+1. **Native Setup with uv (Recommended)**:
+   - For Linux/macOS:
+     ```bash
+     ./dev-setup/setup-uv.sh
+     ```
+   - For Windows:
+     ```powershell
+     .\dev-setup\setup-uv.ps1
+     ```
+
+2. **Traditional Setup**:
+   - For Linux: `./dev-setup/setup-linux.sh`
+   - For macOS: `./dev-setup/setup-macos.sh`
+   - For Windows: `.\dev-setup\setup-windows.ps1`
+
+3. **Docker Setup**:
    ```bash
-   # For Ubuntu/Debian
-   sudo apt-get update
-   sudo apt-get install -y default-jre
-   
-   # For macOS
-   brew install openjdk
-   
-   # For Windows
-   # Download and install JRE from https://www.oracle.com/java/technologies/downloads/
+   cd dev-setup
+   docker-compose up -d
+   docker-compose exec testdatagen bash
    ```
 
-2. Download ANTLR4:
-   ```bash
-   wget https://www.antlr.org/download/antlr-4.13.2-complete.jar -O /tmp/antlr4.jar
-   ```
+These setup scripts will:
+- Check for required dependencies (Python, Java)
+- Download ANTLR4 for parser generation
+- Generate the parser from grammar files
+- Install the package in development mode with all dependencies
+- With uv setup, no virtual environment activation is needed
 
-3. Generate the parser:
-   ```bash
-   # Create the generated directory
-   mkdir -p src/testdatagen/core/parser/generated
-   
-   # Generate the lexer
-   cd src/testdatagen/core/parser
-   java -jar /tmp/antlr4.jar -Dlanguage=Python3 -o generated grammar/TestDataGenLexer.g4
-   
-   # Generate the parser
-   java -jar /tmp/antlr4.jar -Dlanguage=Python3 -visitor -no-listener -lib grammar -o generated grammar/TestDataGen.g4
-   
-   # Create an __init__.py file in the generated directory
-   touch generated/__init__.py
-   
-   # Go back to the repository root
-   cd ../../../..
-   ```
-
-4. Install the package in development mode:
-   ```bash
-   pip install -e .
-   ```
+For more details or troubleshooting, see `dev-setup/README.md`.
 
 ## Step 3: Run an Example
 
@@ -105,16 +94,29 @@ You should see JSON files containing the generated test data according to your s
 
 ## Troubleshooting
 
-If you encounter any issues:
+If you encounter any issues during setup or execution:
 
-1. **Parser Generation Errors**: Make sure Java is installed correctly and ANTLR4 jar file is accessible.
+1. **Setup Issues**: Refer to the troubleshooting section in `dev-setup/README.md` for detailed guidance on resolving common setup problems.
 
-2. **Import Errors**: Ensure the package is installed in development mode with `pip install -e .`
+2. **Parser Generation Errors**: Make sure Java is installed correctly and ANTLR4 jar file is accessible.
 
-3. **Missing Dependencies**: Install any missing dependencies with `pip install -r requirements.txt` (if available) or check the dependencies in `pyproject.toml`.
+3. **Import Errors**: 
+   - With uv: Ensure the package is installed in development mode with `uv pip install -e ".[all]"`
+   - With pip: Ensure the package is installed in development mode with `pip install -e ".[all]"` as described in the setup scripts.
+
+4. **Missing Dependencies**: 
+   - With uv: Run `uv pip install -e ".[all]"` to install all dependencies
+   - With pip: Check the dependencies in `pyproject.toml` and make sure they're installed correctly.
+
+5. **Package Management Issues**: 
+   - If using uv: Run `uv pip list` to check installed packages
+   - If using traditional setup: Ensure your virtual environment is activated with `source .venv/bin/activate` (Linux/macOS) or `.\.venv\Scripts\activate` (Windows)
+
+6. **Schema Parsing Errors**: If you encounter errors like "mismatched input expecting STRING_LITERAL", there may be a mismatch between the grammar definition and the parser implementation. Try using the dev-setup scripts to regenerate the parser correctly.
 
 ## Additional Resources
 
 - Check the `README.md` file for more information about the Test Data Generation Language syntax and features.
 - Explore the `examples` directory for more example schemas.
 - Refer to `IMPLEMENTATION-DESIGN.md` for details about the implementation design.
+- Use the setup scripts and instructions in the `dev-setup` directory for configuring your development environment.

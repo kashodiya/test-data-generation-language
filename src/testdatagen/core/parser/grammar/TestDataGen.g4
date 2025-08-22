@@ -2,7 +2,7 @@
 
 grammar TestDataGen;
 
-import TestDataGenLexer;
+// No import needed, we'll generate lexer separately
 
 // Root rule
 program
