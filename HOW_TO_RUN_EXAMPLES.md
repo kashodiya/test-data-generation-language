@@ -101,11 +101,11 @@ If you encounter any issues during setup or execution:
 2. **Parser Generation Errors**: Make sure Java is installed correctly and ANTLR4 jar file is accessible.
 
 3. **Import Errors**: 
-   - With uv: Ensure the package is installed in development mode with `uv pip install -e ".[all]"`
+   - With uv: Ensure the package is installed in development mode with `uv sync --all-extras`
    - With pip: Ensure the package is installed in development mode with `pip install -e ".[all]"` as described in the setup scripts.
 
 4. **Missing Dependencies**: 
-   - With uv: Run `uv pip install -e ".[all]"` to install all dependencies
+   - With uv: Run `uv sync --all-extras` to install all dependencies
    - With pip: Check the dependencies in `pyproject.toml` and make sure they're installed correctly.
 
 5. **Package Management Issues**: 

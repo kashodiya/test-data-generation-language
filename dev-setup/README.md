@@ -129,7 +129,7 @@ If you prefer to set up your environment manually, follow these steps:
 
 5. Install the package in development mode with uv:
    ```bash
-   uv pip install -e ".[all]"
+   uv sync --all-extras
    ```
 
 ### Option 2: Manual Setup with Traditional Tools
@@ -169,11 +169,11 @@ If you encounter any issues during setup:
 1. **Parser Generation Errors**: Make sure Java is installed correctly and ANTLR4 jar file is accessible.
 
 2. **Import Errors**: 
-   - With uv: Ensure the package is installed in development mode with `uv pip install -e ".[all]"`
+   - With uv: Ensure the package is installed in development mode with `uv sync --all-extras`
    - With pip: Ensure the package is installed in development mode with `pip install -e ".[all]"`
 
 3. **Missing Dependencies**: 
-   - With uv: Run `uv pip install -e ".[all]"` to install all dependencies
+   - With uv: Run `uv sync --all-extras` to install all dependencies
    - With pip: Check the dependencies in `pyproject.toml` and make sure they're installed correctly.
 
 4. **Package Management Issues**: 

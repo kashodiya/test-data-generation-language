@@ -62,7 +62,7 @@ Set-Location -Path "..\..\..\..\"
 
 # Install the package in development mode with all dependencies using uv
 Write-Host "Installing package in development mode with all dependencies using uv..."
-uv pip install -e ".[all]"
+uv sync --all-extras
 
 Write-Host "Development environment setup completed successfully!"
 Write-Host ""

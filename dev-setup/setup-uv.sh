@@ -68,7 +68,7 @@ cd ../../../..
 
 # Install the package in development mode with all dependencies using uv
 echo "Installing package in development mode with all dependencies using uv..."
-uv pip install -e ".[all]"
+uv sync --all-extras
 
 echo "Development environment setup completed successfully!"
 echo ""
