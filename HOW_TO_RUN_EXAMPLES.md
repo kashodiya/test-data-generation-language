@@ -28,11 +28,11 @@ For setting up your development environment, please refer to the detailed instru
 1. **Setup with uv**:
    - For Linux/macOS:
      ```bash
-     ./dev-setup/setup-uv.sh
+     ./dev-setup/setup.sh
      ```
    - For Windows:
      ```powershell
-     .\dev-setup\setup-uv.ps1
+     .\dev-setup\setup.ps1
      ```
 
 2. **Docker Setup**:

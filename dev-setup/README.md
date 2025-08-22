@@ -22,17 +22,17 @@ Choose one of the following setup methods based on your operating system and pre
 
 ```bash
 # Make the script executable
-chmod +x dev-setup/setup-uv.sh
+chmod +x dev-setup/setup.sh
 
 # Run the setup script
-./dev-setup/setup-uv.sh
+./dev-setup/setup.sh
 ```
 
 #### For Windows
 
 ```powershell
 # Run the setup script in PowerShell
-.\dev-setup\setup-uv.ps1
+.\dev-setup\setup.ps1
 ```
 
 ### Option 2: Docker Setup
