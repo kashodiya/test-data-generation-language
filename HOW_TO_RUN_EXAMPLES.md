@@ -25,7 +25,7 @@ If you're using OpenHands, the setup will be performed automatically when the re
 
 For setting up your development environment, please refer to the detailed instructions in the `dev-setup/README.md` file. The dev-setup directory contains scripts for different operating systems and a Docker option:
 
-1. **Native Setup with uv (Recommended)**:
+1. **Setup with uv**:
    - For Linux/macOS:
      ```bash
      ./dev-setup/setup-uv.sh
@@ -35,12 +35,7 @@ For setting up your development environment, please refer to the detailed instru
      .\dev-setup\setup-uv.ps1
      ```
 
-2. **Traditional Setup**:
-   - For Linux: `./dev-setup/setup-linux.sh`
-   - For macOS: `./dev-setup/setup-macos.sh`
-   - For Windows: `.\dev-setup\setup-windows.ps1`
-
-3. **Docker Setup**:
+2. **Docker Setup**:
    ```bash
    cd dev-setup
    docker-compose up -d
@@ -52,7 +47,7 @@ These setup scripts will:
 - Download ANTLR4 for parser generation
 - Generate the parser from grammar files
 - Install the package in development mode with all dependencies
-- With uv setup, no virtual environment activation is needed
+- With uv, no virtual environment activation is needed
 
 For more details or troubleshooting, see `dev-setup/README.md`.
 
@@ -100,17 +95,11 @@ If you encounter any issues during setup or execution:
 
 2. **Parser Generation Errors**: Make sure Java is installed correctly and ANTLR4 jar file is accessible.
 
-3. **Import Errors**: 
-   - With uv: Ensure the package is installed in development mode with `uv sync --all-extras`
-   - With pip: Ensure the package is installed in development mode with `pip install -e ".[all]"` as described in the setup scripts.
+3. **Import Errors**: Ensure the package is installed in development mode with `uv sync --all-extras`
 
-4. **Missing Dependencies**: 
-   - With uv: Run `uv sync --all-extras` to install all dependencies
-   - With pip: Check the dependencies in `pyproject.toml` and make sure they're installed correctly.
+4. **Missing Dependencies**: Run `uv sync --all-extras` to install all dependencies
 
-5. **Package Management Issues**: 
-   - If using uv: Run `uv pip list` to check installed packages
-   - If using traditional setup: Ensure your virtual environment is activated with `source .venv/bin/activate` (Linux/macOS) or `.\.venv\Scripts\activate` (Windows)
+5. **Package Management Issues**: Run `uv pip list` to check installed packages
 
 6. **Schema Parsing Errors**: If you encounter errors like "mismatched input expecting STRING_LITERAL", there may be a mismatch between the grammar definition and the parser implementation. Try using the dev-setup scripts to regenerate the parser correctly.
 

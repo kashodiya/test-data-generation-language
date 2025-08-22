@@ -14,7 +14,7 @@ This directory contains scripts and configuration files to help you set up your 
 
 Choose one of the following setup methods based on your operating system and preferences:
 
-### Option 1: Setup with uv (Recommended)
+### Option 1: Setup with uv
 
 [uv](https://github.com/astral-sh/uv) is a fast Python package installer and resolver that doesn't require virtual environment activation.
 
@@ -35,36 +35,7 @@ chmod +x dev-setup/setup-uv.sh
 .\dev-setup\setup-uv.ps1
 ```
 
-### Option 2: Traditional Native Setup
-
-#### For Linux
-
-```bash
-# Make the script executable
-chmod +x dev-setup/setup-linux.sh
-
-# Run the setup script
-./dev-setup/setup-linux.sh
-```
-
-#### For macOS
-
-```bash
-# Make the script executable
-chmod +x dev-setup/setup-macos.sh
-
-# Run the setup script
-./dev-setup/setup-macos.sh
-```
-
-#### For Windows
-
-```powershell
-# Run the setup script in PowerShell
-.\dev-setup\setup-windows.ps1
-```
-
-### Option 3: Docker Setup
+### Option 2: Docker Setup
 
 If you prefer to use Docker for development:
 
@@ -89,13 +60,11 @@ The setup scripts perform the following tasks:
 3. Generate the parser from grammar files
 4. Install the package in development mode with all dependencies
 
-The traditional setup scripts also create a virtual environment, while the uv setup scripts use uv's built-in isolation features without requiring virtual environment activation.
+The uv setup scripts use uv's built-in isolation features without requiring virtual environment activation.
 
 ## Manual Setup
 
 If you prefer to set up your environment manually, follow these steps:
-
-### Option 1: Manual Setup with uv (Recommended)
 
 1. Install uv:
    ```bash
@@ -132,53 +101,17 @@ If you prefer to set up your environment manually, follow these steps:
    uv sync --all-extras
    ```
 
-### Option 2: Manual Setup with Traditional Tools
-
-1. Install Java (required for ANTLR4)
-
-2. Download ANTLR4:
-   ```bash
-   wget https://www.antlr.org/download/antlr-4.13.2-complete.jar -O /tmp/antlr4.jar
-   ```
-
-3. Generate the parser:
-   ```bash
-   mkdir -p src/testdatagen/core/parser/generated
-   cd src/testdatagen/core/parser
-   java -jar /tmp/antlr4.jar -Dlanguage=Python3 -o generated grammar/TestDataGenLexer.g4
-   java -jar /tmp/antlr4.jar -Dlanguage=Python3 -visitor -no-listener -lib grammar -o generated grammar/TestDataGen.g4
-   touch generated/__init__.py
-   cd ../../../..
-   ```
-
-4. Create and activate a virtual environment:
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows: .\.venv\Scripts\Activate.ps1
-   ```
-
-5. Install the package in development mode:
-   ```bash
-   pip install -e ".[all]"
-   ```
-
 ## Troubleshooting
 
 If you encounter any issues during setup:
 
 1. **Parser Generation Errors**: Make sure Java is installed correctly and ANTLR4 jar file is accessible.
 
-2. **Import Errors**: 
-   - With uv: Ensure the package is installed in development mode with `uv sync --all-extras`
-   - With pip: Ensure the package is installed in development mode with `pip install -e ".[all]"`
+2. **Import Errors**: Ensure the package is installed in development mode with `uv sync --all-extras`
 
-3. **Missing Dependencies**: 
-   - With uv: Run `uv sync --all-extras` to install all dependencies
-   - With pip: Check the dependencies in `pyproject.toml` and make sure they're installed correctly.
+3. **Missing Dependencies**: Run `uv sync --all-extras` to install all dependencies
 
-4. **Package Management Issues**: 
-   - If using uv: Run `uv pip list` to check installed packages
-   - If using traditional setup: Ensure your virtual environment is activated with `source .venv/bin/activate` (Linux/macOS) or `.\.venv\Scripts\activate` (Windows)
+4. **Package Management Issues**: Run `uv pip list` to check installed packages
 
 5. **Schema Parsing Errors**: If you encounter errors like "mismatched input expecting STRING_LITERAL", there may be a mismatch between the grammar definition and the parser implementation. Try regenerating the parser:
    ```bash
