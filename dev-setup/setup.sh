@@ -63,6 +63,11 @@ java -jar /tmp/antlr4.jar -Dlanguage=Python3 -visitor -no-listener -lib grammar 
 # Create an __init__.py file in the generated directory
 touch generated/__init__.py
 
+# Move the generated files from the grammar subdirectory to the generated directory
+echo "Moving generated files to the correct location..."
+mv generated/grammar/*.py generated/
+touch generated/__init__.py
+
 # Go back to the repository root
 cd ../../../..
 
@@ -73,7 +78,7 @@ uv sync --all-extras
 echo "Development environment setup completed successfully!"
 echo ""
 echo "You can now run the examples directly using:"
-echo "  testdatagen validate examples/basic/simple_table.tdg"
-echo "  testdatagen generate examples/basic/simple_table.tdg --format json --output ./output"
+echo "  uv run testdatagen validate examples/basic/simple_table.tdg"
+echo "  uv run testdatagen generate examples/basic/simple_table.tdg --format json --output ./output"
 echo ""
 echo "No virtual environment activation is needed with uv!"

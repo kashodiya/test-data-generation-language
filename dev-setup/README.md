@@ -75,6 +75,9 @@ If you prefer to set up your environment manually, follow these steps:
    java -jar /tmp/antlr4.jar -Dlanguage=Python3 -o generated grammar/TestDataGenLexer.g4
    java -jar /tmp/antlr4.jar -Dlanguage=Python3 -visitor -no-listener -lib grammar -o generated grammar/TestDataGen.g4
    touch generated/__init__.py
+   # Move the generated files from the grammar subdirectory to the generated directory
+   mv generated/grammar/*.py generated/
+   touch generated/__init__.py
    cd ../../../..
    ```
 
@@ -95,11 +98,14 @@ If you encounter any issues during setup:
 
 4. **Package Management Issues**: Run `uv pip list` to check installed packages
 
-5. **Schema Parsing Errors**: If you encounter errors like "mismatched input expecting STRING_LITERAL", there may be a mismatch between the grammar definition and the parser implementation. Try regenerating the parser:
+5. **Schema Parsing Errors**: If you encounter errors like "mismatched input expecting STRING_LITERAL" or "No module named 'testdatagen.core.parser.generated.TestDataGenLexer'", there may be a mismatch between the grammar definition and the parser implementation. Try regenerating the parser:
    ```bash
    cd src/testdatagen/core/parser
    java -jar /tmp/antlr4.jar -Dlanguage=Python3 -o generated grammar/TestDataGenLexer.g4
    java -jar /tmp/antlr4.jar -Dlanguage=Python3 -visitor -no-listener -lib grammar -o generated grammar/TestDataGen.g4
+   touch generated/__init__.py
+   # Move the generated files from the grammar subdirectory to the generated directory
+   mv generated/grammar/*.py generated/
    touch generated/__init__.py
    ```
 

@@ -83,9 +83,6 @@ class ASTBuilder(TestDataGenVisitor):
         # Get the schema name
         if ctx.ID():
             schema_name = ctx.ID().getText()
-        elif ctx.STRING_LITERAL():
-            # Remove quotes from string literal
-            schema_name = ctx.STRING_LITERAL().getText()[1:-1]
         else:
             schema_name = "DefaultSchema"
         

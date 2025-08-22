@@ -57,6 +57,11 @@ java -jar $antlrJarPath -Dlanguage=Python3 -visitor -no-listener -lib grammar -o
 # Create an __init__.py file in the generated directory
 New-Item -ItemType File -Force -Path "generated\__init__.py" | Out-Null
 
+# Move the generated files from the grammar subdirectory to the generated directory
+Write-Host "Moving generated files to the correct location..."
+Copy-Item -Path "generated\grammar\*.py" -Destination "generated\" -Force
+New-Item -ItemType File -Force -Path "generated\__init__.py" | Out-Null
+
 # Go back to the repository root
 Set-Location -Path "..\..\..\..\"
 
@@ -67,7 +72,7 @@ uv sync --all-extras
 Write-Host "Development environment setup completed successfully!"
 Write-Host ""
 Write-Host "You can now run the examples directly using:"
-Write-Host "  testdatagen validate examples\basic\simple_table.tdg"
-Write-Host "  testdatagen generate examples\basic\simple_table.tdg --format json --output .\output"
+Write-Host "  uv run testdatagen validate examples\basic\simple_table.tdg"
+Write-Host "  uv run testdatagen generate examples\basic\simple_table.tdg --format json --output .\output"
 Write-Host ""
 Write-Host "No virtual environment activation is needed with uv!"

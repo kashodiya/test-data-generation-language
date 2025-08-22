@@ -46,14 +46,24 @@ For more details or troubleshooting, see `dev-setup/README.md`.
 
 ## Step 3: Run an Example
 
-Once the setup is complete, you can run examples using the `testdatagen` command-line tool:
+Once the setup is complete, you can run examples using the `testdatagen` command-line tool with uv:
 
 ```bash
 # Validate a schema
-testdatagen validate examples/basic/simple_table.tdg
+uv run testdatagen validate examples/basic/simple_table.tdg
 
 # Generate test data
-testdatagen generate examples/basic/simple_table.tdg --format json --output ./output
+uv run testdatagen generate examples/basic/simple_table.tdg --format json --output ./output
+```
+
+If you prefer to use the wrapper script for handling schema name formats:
+
+```bash
+# Validate a schema using the wrapper script
+python validate_wrapper.py examples/basic/simple_table.tdg
+
+# Generate test data (first validate with wrapper, then generate)
+python validate_wrapper.py examples/basic/simple_table.tdg && uv run testdatagen generate examples/basic/simple_table.tdg --format json --output ./output
 ```
 
 ### Available Examples
@@ -62,12 +72,12 @@ The repository includes several examples:
 
 1. **Basic Example**: A simple schema with basic tables and relationships
    ```bash
-   testdatagen generate examples/basic/simple_table.tdg --format json --output ./output
+   uv run testdatagen generate examples/basic/simple_table.tdg --format json --output ./output
    ```
 
 2. **Advanced Example**: Advanced schema with custom types and complex constraints
    ```bash
-   testdatagen generate examples/advanced/custom_types.tdg --format json --output ./output
+   uv run testdatagen generate examples/advanced/custom_types.tdg --format json --output ./output
    ```
 
 ## Step 4: Explore the Generated Data

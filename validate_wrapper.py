@@ -29,7 +29,7 @@ def main():
     
     try:
         # Run the validation command on the temporary file
-        cmd = ["testdatagen", "validate", temp_file_path]
+        cmd = ["uv", "run", "testdatagen", "validate", temp_file_path]
         result = subprocess.run(cmd, capture_output=True, text=True)
         
         # Print the output, but replace the temporary file path with the original file path
