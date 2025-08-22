@@ -1,0 +1,76 @@
+
+
+
+schema TestDatabase {
+    table User {
+        field id: integer with primary key;
+        field username: string with not null;
+        field email: string with not null;
+        field first_name: string;
+        field last_name: string;
+        field age: integer;
+        field is_active: boolean with default true;
+        field created_at: timestamp with not null;
+        
+        constraint unique(username);
+        constraint unique(email);
+        
+        generate {
+            count = 100,
+            strategy = "faker"
+        };
+    }
+    
+    table Product {
+        field id: integer with primary key;
+        field name: string with not null;
+        field description: string;
+        field price: decimal with not null;
+        field category: string;
+        field in_stock: boolean with default true;
+        field created_at: timestamp with not null;
+        
+        constraint check(price > 0);
+        
+        generate {
+            count = 50,
+            strategy = "faker"
+        };
+    }
+    
+    table Order {
+        field id: integer with primary key;
+        field user_id: integer with not null;
+        field order_date: timestamp with not null;
+        field status: string with not null;
+        field total_amount: decimal with not null;
+        
+        constraint foreign key(user_id) references User(id);
+        constraint check(total_amount >= 0);
+        
+        generate {
+            count = 200,
+            strategy = "faker"
+        };
+    }
+    
+    table OrderItem {
+        field id: integer with primary key;
+        field order_id: integer with not null;
+        field product_id: integer with not null;
+        field quantity: integer with not null;
+        field price: decimal with not null;
+        
+        constraint foreign key(order_id) references Order(id);
+        constraint foreign key(product_id) references Product(id);
+        constraint check(quantity > 0);
+        constraint check(price >= 0);
+        
+        generate {
+            count = 500,
+            strategy = "faker"
+        };
+    }
+}
+
+

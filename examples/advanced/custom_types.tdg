@@ -1,0 +1,133 @@
+
+
+
+
+
+schema AdvancedExample {
+    // Custom type definitions
+    type EmailType = string with pattern("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    type PhoneType = string with pattern("^\\+?[0-9]{10,15}$");
+    type PositiveDecimal = decimal with range(0.01, 1000000.00);
+    type Rating = integer with range(1, 5);
+    type Status = enum("pending", "processing", "shipped", "delivered", "cancelled");
+    
+    table Customer {
+        field id: uuid with primary key;
+        field name: string with not null, length(2, 100);
+        field email: EmailType with not null;
+        field phone: PhoneType;
+        field address: string with length(0, 200);
+        field created_at: timestamp with not null, default now();
+        field loyalty_points: integer with range(0, 10000), default 0;
+        field status: Status with default "pending";
+        
+        constraint unique(email);
+        
+        generate {
+            count = 100,
+            strategy = "faker",
+            seed = 12345
+        };
+    }
+    
+    table Product {
+        field id: uuid with primary key;
+        field sku: string with not null, pattern("^[A-Z]{2}-[0-9]{6}$");
+        field name: string with not null, length(3, 100);
+        field description: string with length(0, 1000);
+        field price: PositiveDecimal with not null;
+        field category: string with not null;
+        field tags: string[] with length(0, 10);
+        field attributes: json;
+        field in_stock: boolean with default true;
+        field created_at: timestamp with not null, default now();
+        
+        constraint unique(sku);
+        
+        generate {
+            count = 200,
+            strategy = "faker",
+            seed = 12345
+        };
+    }
+    
+    table Review {
+        field id: uuid with primary key;
+        field product_id: uuid with not null;
+        field customer_id: uuid with not null;
+        field rating: Rating with not null;
+        field comment: string with length(0, 500);
+        field created_at: timestamp with not null, default now();
+        
+        constraint foreign key(product_id) references Product(id);
+        constraint foreign key(customer_id) references Customer(id);
+        constraint unique(product_id, customer_id);
+        
+        // Business rule: A customer can only review a product once
+        constraint check(
+            not exists(
+                select 1 from Review r 
+                where r.product_id = product_id 
+                and r.customer_id = customer_id 
+                and r.id != id
+            )
+        );
+        
+        generate {
+            count = 500,
+            strategy = "faker",
+            seed = 12345
+        };
+    }
+    
+    table Order {
+        field id: uuid with primary key;
+        field customer_id: uuid with not null;
+        field order_date: timestamp with not null, default now();
+        field status: Status with not null, default "pending";
+        field total_amount: PositiveDecimal with not null;
+        field shipping_address: string with not null, length(5, 200);
+        field payment_method: string with not null;
+        
+        constraint foreign key(customer_id) references Customer(id);
+        
+        // Business rule: Orders with total_amount > 1000 must have status "processing" or higher
+        constraint check(
+            total_amount <= 1000 or 
+            status in ("processing", "shipped", "delivered")
+        );
+        
+        generate {
+            count = 300,
+            strategy = "faker",
+            seed = 12345
+        };
+    }
+    
+    table OrderItem {
+        field id: uuid with primary key;
+        field order_id: uuid with not null;
+        field product_id: uuid with not null;
+        field quantity: integer with not null, range(1, 100);
+        field price: PositiveDecimal with not null;
+        field discount: decimal with range(0, 100), default 0;
+        
+        constraint foreign key(order_id) references Order(id);
+        constraint foreign key(product_id) references Product(id);
+        
+        // Business rule: Discount cannot be more than 50% for quantities less than 10
+        constraint check(
+            quantity >= 10 or discount <= 50
+        );
+        
+        generate {
+            count = 800,
+            strategy = "faker",
+            seed = 12345
+        };
+    }
+}
+
+
+
+
