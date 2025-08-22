@@ -1,12 +1,3 @@
-
-
-
-
-
-
-
-
-
 from typing import Dict, List, Optional, Any, Union
 from antlr4 import InputStream, CommonTokenStream, ParserRuleContext
 from antlr4.tree.Tree import ParseTree
@@ -52,6 +43,21 @@ class ASTBuilder(TestDataGenVisitor):
         """Visit a program node"""
         # Get the schema declaration
         schema_ctx = ctx.schemaDeclaration()
+        print(f"Schema context: {schema_ctx}")
+        
+        # Debug the schema context
+        if schema_ctx:
+            print(f"Schema context type: {type(schema_ctx)}")
+            print(f"Schema context dir: {dir(schema_ctx)}")
+            if hasattr(schema_ctx, 'tableDeclaration'):
+                print(f"Table declarations: {schema_ctx.tableDeclaration()}")
+                print(f"Number of table declarations: {len(schema_ctx.tableDeclaration())}")
+                for i, table_ctx in enumerate(schema_ctx.tableDeclaration()):
+                    print(f"Table declaration {i}: {table_ctx}")
+            else:
+                print("Schema context has no tableDeclaration attribute")
+        else:
+            print("No schema context found")
         
         # Get imports
         imports = []
@@ -61,6 +67,9 @@ class ASTBuilder(TestDataGenVisitor):
         # Visit the schema
         schema = self.visitSchemaDeclaration(schema_ctx)
         schema.imports = imports
+        
+        print(f"Schema after visiting: {schema}")
+        print(f"Schema tables: {schema.tables}")
         
         return schema
     
@@ -81,23 +90,50 @@ class ASTBuilder(TestDataGenVisitor):
     def visitSchemaDeclaration(self, ctx: TestDataGenParser.SchemaDeclarationContext) -> SchemaNode:
         """Visit a schema declaration"""
         # Get the schema name
-        if ctx.ID():
+        if ctx and hasattr(ctx, 'ID') and ctx.ID():
             schema_name = ctx.ID().getText()
+            # If the schema name is in quotes, remove them
+            if schema_name.startswith('"') and schema_name.endswith('"'):
+                schema_name = schema_name[1:-1]
         else:
             schema_name = "DefaultSchema"
         
+        print(f"Schema name: {schema_name}")
+        
         # Get the tables
         tables = []
-        for table_ctx in ctx.tableDeclaration():
-            tables.append(self.visitTableDeclaration(table_ctx))
+        print(f"Table declarations: {ctx.tableDeclaration() if ctx and hasattr(ctx, 'tableDeclaration') else 'None'}")
         
-        return SchemaNode(
+        # Debug the table declarations
+        if ctx and hasattr(ctx, 'tableDeclaration') and ctx.tableDeclaration():
+            print(f"Number of table declarations: {len(ctx.tableDeclaration())}")
+            for i, table_ctx in enumerate(ctx.tableDeclaration()):
+                print(f"Table declaration {i}: {table_ctx}")
+                if hasattr(table_ctx, 'ID'):
+                    print(f"Table name: {table_ctx.ID().getText() if table_ctx.ID() else 'No ID'}")
+                else:
+                    print("Table context has no ID attribute")
+                
+                table = self.visitTableDeclaration(table_ctx)
+                print(f"Processed table: {table}")
+                tables.append(table)
+        else:
+            print("No table declarations found")
+        
+        print(f"Tables after processing: {tables}")
+                # Create a schema node with the parsed information
+        schema_node = SchemaNode(
             node_type=NodeType.SCHEMA,
             name=schema_name,
             tables=tables,
-            line=ctx.start.line,
-            column=ctx.start.column
+            line=ctx.start.line if ctx and hasattr(ctx, 'start') else 0,
+            column=ctx.start.column if ctx and hasattr(ctx, 'start') else 0
         )
+        
+        print(f"Schema after visiting: {schema_node}")
+        print(f"Schema tables: {schema_node.tables}")
+        
+        return schema_node
     
     def visitTableDeclaration(self, ctx: TestDataGenParser.TableDeclarationContext) -> TableNode:
         """Visit a table declaration"""
@@ -113,12 +149,28 @@ class ASTBuilder(TestDataGenVisitor):
         constraints = []
         for constraint_ctx in ctx.tableConstraint():
             constraints.append(self.visitTableConstraint(constraint_ctx))
+            
+        # Get generation directive if present
+        generation_options = None
+        if ctx.generationDirective():
+            generation_directive = self.visitGenerationDirective(ctx.generationDirective())
+            if isinstance(generation_directive, dict) and "parameters" in generation_directive:
+                generation_options = generation_directive["parameters"]
+            else:
+                print(f"Invalid generation directive format: {generation_directive}")
+                generation_options = {}
+            
+        # Debug output
+        print(f"Table {table_name} has {len(fields)} fields, {len(constraints)} constraints")
+        if generation_options:
+            print(f"Table {table_name} has generation options: {generation_options}")
         
         return TableNode(
             node_type=NodeType.TABLE,
             name=table_name,
             fields=fields,
             constraints=constraints,
+            generation_options=generation_options,
             line=ctx.start.line,
             column=ctx.start.column
         )
@@ -294,6 +346,8 @@ class ASTBuilder(TestDataGenVisitor):
             return self.visitUniqueConstraint(ctx.uniqueConstraint())
         elif ctx.checkConstraint():
             return self.visitCheckConstraint(ctx.checkConstraint())
+        elif ctx.generationDirective():
+            return self.visitGenerationDirective(ctx.generationDirective())
         else:
             return {"type": "unknown"}
     
@@ -348,11 +402,33 @@ class ASTBuilder(TestDataGenVisitor):
     def visitIdList(self, ctx: TestDataGenParser.IdListContext) -> List[str]:
         """Visit an ID list"""
         return [id_node.getText() for id_node in ctx.ID()]
-
-
-
-
-
-
-
-
+        
+    def visitGenerationDirective(self, ctx: TestDataGenParser.GenerationDirectiveContext) -> Dict[str, Any]:
+        """Visit a generation directive"""
+        options = self.visitGenerationOptions(ctx.generationOptions())
+        
+        return {
+            "type": "generate",
+            "name": "generation_directive",
+            "parameters": options
+        }
+        
+    def visitGenerationOptions(self, ctx: TestDataGenParser.GenerationOptionsContext) -> Dict[str, Any]:
+        """Visit generation options"""
+        options = {}
+        
+        for option_ctx in ctx.generationOption():
+            option_name = option_ctx.ID().getText()
+            option_value = self.visitGenerationValue(option_ctx.generationValue())
+            options[option_name] = option_value
+            
+        return options
+        
+    def visitGenerationValue(self, ctx: TestDataGenParser.GenerationValueContext) -> Any:
+        """Visit a generation value"""
+        if ctx.literal():
+            return self.visitLiteral(ctx.literal())
+        elif ctx.functionCall():
+            return self.visitFunctionCall(ctx.functionCall())
+        else:
+            return None

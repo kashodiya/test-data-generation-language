@@ -38,17 +38,17 @@ class FakerStrategy(GenerationStrategy):
         self.type_mapping = {}
         self._initialize_type_mapping()
     
-    def initialize(self, schema: SchemaNode, options: Dict[str, Any]) -> None:
+    def initialize(self, schema: SchemaNode, options: Any) -> None:
         """Initialize the strategy with a schema and options"""
         super().initialize(schema, options)
         
         # Initialize Faker with locale
-        locale = options.get("locale", "en_US")
+        locale = options.locale if hasattr(options, 'locale') else "en_US"
         self.faker = Faker(locale)
         
         # Set random seed if provided
-        if "seed" in options and options["seed"] is not None:
-            Faker.seed(options["seed"])
+        if hasattr(options, 'seed') and options.seed is not None:
+            Faker.seed(options.seed)
     
     def _initialize_type_mapping(self) -> None:
         """Initialize the mapping of data types to Faker providers"""
@@ -133,10 +133,10 @@ class FakerStrategy(GenerationStrategy):
             "isbn13": lambda f, _: f.isbn13(),
         }
     
-    def generate_table(self, table: TableNode, options: Dict[str, Any]) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    def generate_table(self, table: TableNode, options: Any) -> Tuple[pd.DataFrame, Dict[str, Any]]:
         """Generate data for a table"""
         # Get record count
-        record_count = options.get("record_count", 100)
+        record_count = options.record_count if hasattr(options, 'record_count') else 100
         
         # Generate data
         data = []
@@ -193,12 +193,12 @@ class FakerStrategy(GenerationStrategy):
         params = constraint.parameters
         
         # Check for provider
-        provider = params.get("provider")
+        provider = params["provider"] if "provider" in params else None
         if not provider:
             return None
             
         # Check for method
-        method = params.get("method")
+        method = params["method"] if "method" in params else None
         if not method:
             return None
             
@@ -217,8 +217,8 @@ class FakerStrategy(GenerationStrategy):
         faker_method = getattr(faker_provider, method)
         
         # Get arguments
-        args = params.get("args", [])
-        kwargs = params.get("kwargs", {})
+        args = params["args"] if "args" in params else []
+        kwargs = params["kwargs"] if "kwargs" in params else {}
         
         # Call method
         try:
