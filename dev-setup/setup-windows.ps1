@@ -75,9 +75,9 @@ Write-Host "Activating virtual environment..." -ForegroundColor Green
 Write-Host "Installing package in development mode with all dependencies..." -ForegroundColor Green
 pip install -e ".[all]"
 
-# Set up pre-commit hooks
-Write-Host "Setting up pre-commit hooks..." -ForegroundColor Green
-pre-commit install
+# Pre-commit hooks setup removed as per user request
+Write-Host "Pre-commit hooks setup skipped as requested." -ForegroundColor Yellow
+Write-Host "If you want to set up pre-commit hooks later, run: pre-commit install" -ForegroundColor Yellow
 
 Write-Host "Development environment setup completed successfully!" -ForegroundColor Green
 Write-Host ""

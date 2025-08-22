@@ -68,7 +68,6 @@ The setup scripts perform the following tasks:
 3. Generate the parser from grammar files
 4. Create a virtual environment
 5. Install the package in development mode with all dependencies
-6. Set up pre-commit hooks for code quality
 
 ## Manual Setup
 
@@ -96,10 +95,6 @@ If you prefer to set up your environment manually, follow these steps:
 5. Install the package in development mode:
    ```bash
    pip install -e ".[all]"
-   ```
-6. Set up pre-commit hooks:
-   ```bash
-   pre-commit install
    ```
 
 ## Troubleshooting

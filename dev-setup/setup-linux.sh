@@ -58,9 +58,9 @@ source .venv/bin/activate
 echo "Installing package in development mode with all dependencies..."
 pip install -e ".[all]"
 
-# Set up pre-commit hooks
-echo "Setting up pre-commit hooks..."
-pre-commit install
+# Pre-commit hooks setup removed as per user request
+# If you want to set up pre-commit hooks later, run:
+# pre-commit install
 
 echo "Development environment setup completed successfully!"
 echo ""

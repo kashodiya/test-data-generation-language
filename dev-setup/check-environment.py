@@ -110,15 +110,15 @@ def check_dependencies():
 
 
 def check_pre_commit():
-    """Check if pre-commit hooks are installed."""
+    """Check if pre-commit hooks are installed (optional)."""
     pre_commit_file = Path(".git/hooks/pre-commit")
     
     if pre_commit_file.exists():
         print("✅ Pre-commit hooks are installed")
         return True
     else:
-        print("❌ Pre-commit hooks are not installed")
-        return False
+        print("ℹ️ Pre-commit hooks are not installed (optional)")
+        return True  # Return True since this is now optional
 
 
 def main():
@@ -146,7 +146,7 @@ def main():
         print("2. Make sure Java is installed and in your PATH")
         print("3. Generate the parser manually if needed")
         print("4. Install the package in development mode with: pip install -e \".[all]\"")
-        print("5. Install pre-commit hooks with: pre-commit install")
+        # Pre-commit hooks suggestion removed as per user request
 
 
 if __name__ == "__main__":

@@ -40,8 +40,9 @@ WORKDIR /app
 # Install the package in development mode with all dependencies
 RUN pip install --no-cache-dir -e ".[all]"
 
-# Set up pre-commit hooks
-RUN pre-commit install
+# Pre-commit hooks setup removed as per user request
+# If you want to set up pre-commit hooks later, run:
+# RUN pre-commit install
 
 # Default command
 CMD ["bash"]
