@@ -19,6 +19,7 @@ from pydantic import BaseModel
 from ..ast.nodes import SchemaNode
 from .builder import ASTBuilder
 from .error_listener import TestDataGenErrorListener, SyntaxError
+from .custom_error_listener import CustomErrorListener
 
 
 class ParseResult(BaseModel):
@@ -48,11 +49,35 @@ class Parser:
     def _parse(self, input_stream: InputStream) -> ParseResult:
         """Parse an input stream"""
         # Reset error listener
-        self.error_listener = TestDataGenErrorListener()
+        self.error_listener = CustomErrorListener()
         
         try:
+            # Preprocess the input to fix schema name format
+            import re
+            input_text = input_stream.strdata
+            modified_text = re.sub(r'schema\s+(\w+)\s+{', r'schema "\1" {', input_text)
+            
+            # Create a new input stream with the modified text
+            from antlr4 import InputStream as ANTLRInputStream
+            modified_input = ANTLRInputStream(modified_text)
+            
             # Build AST
-            ast = self.builder.build(input_stream)
+            from antlr4 import CommonTokenStream
+            from .generated.TestDataGenLexer import TestDataGenLexer
+            from .generated.TestDataGenParser import TestDataGenParser
+            
+            # Create lexer and parser
+            lexer = TestDataGenLexer(modified_input)
+            lexer.removeErrorListeners()
+            lexer.addErrorListener(self.error_listener)
+            
+            token_stream = CommonTokenStream(lexer)
+            parser = TestDataGenParser(token_stream)
+            parser.removeErrorListeners()
+            parser.addErrorListener(self.error_listener)
+            
+            # Parse the input
+            parse_tree = parser.program()
             
             # Check for syntax errors
             if self.error_listener.has_errors():
@@ -62,12 +87,17 @@ class Parser:
                     success=False
                 )
             
+            # Build AST from parse tree
+            ast = self.builder.visit(parse_tree)
+            
             return ParseResult(
                 ast=ast,
                 errors=[],
                 success=True
             )
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             # Handle unexpected errors
             error = SyntaxError(
                 message=f"Unexpected error: {str(e)}",

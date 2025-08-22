@@ -46,7 +46,7 @@ For more detailed instructions, see the [Development Setup Guide](./dev-setup/RE
 1. Define your schema in a `.tdg` file:
 
 ```
-schema TestDatabase {
+schema "TestDatabase" {
     table User {
         field id: integer with primary key;
         field username: string with not null;
@@ -64,6 +64,8 @@ schema TestDatabase {
 }
 ```
 
+> **Note**: The schema name can be either quoted (`schema "TestDatabase" {`) or unquoted (`schema TestDatabase {`). The parser has been modified to handle both formats.
+
 2. Validate your schema:
 
 ```bash
@@ -75,6 +77,33 @@ testdatagen validate schema.tdg
 ```bash
 testdatagen generate schema.tdg --count 100 --format json --output ./output
 ```
+
+## Schema Name Format
+
+The parser supports both quoted and unquoted schema names:
+
+```
+# Quoted schema name (recommended)
+schema "TestDatabase" {
+    // ...
+}
+
+# Unquoted schema name (also supported)
+schema TestDatabase {
+    // ...
+}
+```
+
+We've implemented a wrapper script that automatically handles both formats. If you encounter any issues with schema name format, you can use one of the following solutions:
+
+1. Use the wrapper script:
+   ```bash
+   python validate_wrapper.py examples/basic/simple.tdg
+   ```
+
+2. Use the modified parser (installed as the default `testdatagen` command)
+
+3. Manually add quotes around your schema name in your `.tdg` file
 
 ## Syntax
 

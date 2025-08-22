@@ -30,9 +30,21 @@ class ASTBuilder(TestDataGenVisitor):
     
     def build(self, input_stream: InputStream) -> SchemaNode:
         """Build an AST from an input stream"""
+        # This method is no longer used directly
+        # The parsing is now done in the Parser._parse method
+        # This is kept for backward compatibility
+        from .error_listener import TestDataGenErrorListener
+        error_listener = TestDataGenErrorListener()
+        
         lexer = TestDataGenLexer(input_stream)
+        lexer.removeErrorListeners()
+        lexer.addErrorListener(error_listener)
+        
         token_stream = CommonTokenStream(lexer)
         parser = TestDataGenParser(token_stream)
+        parser.removeErrorListeners()
+        parser.addErrorListener(error_listener)
+        
         parse_tree = parser.program()
         return self.visit(parse_tree)
     
@@ -60,7 +72,7 @@ class ASTBuilder(TestDataGenVisitor):
         import_path = import_path[1:-1]
         
         # Check for alias
-        if ctx.AS():
+        if ctx.AS() and ctx.ID():
             alias = ctx.ID().getText()
             return f"{import_path} as {alias}"
         
@@ -69,7 +81,13 @@ class ASTBuilder(TestDataGenVisitor):
     def visitSchemaDeclaration(self, ctx: TestDataGenParser.SchemaDeclarationContext) -> SchemaNode:
         """Visit a schema declaration"""
         # Get the schema name
-        schema_name = ctx.ID().getText()
+        if ctx.ID():
+            schema_name = ctx.ID().getText()
+        elif ctx.STRING_LITERAL():
+            # Remove quotes from string literal
+            schema_name = ctx.STRING_LITERAL().getText()[1:-1]
+        else:
+            schema_name = "DefaultSchema"
         
         # Get the tables
         tables = []
