@@ -1,5 +1,6 @@
 #!/bin/bash
 echo "SETTING UP USING: :test-data-generation-language/.openhands/setup.sh"
+echo "Current directory is: $(pwd)"
 
 # # setup.sh for Test Data Generation Language repository
 # # This script will be executed automatically by OpenHands when the repository is cloned
