@@ -32,14 +32,14 @@ class GenerationStrategy(ABC):
         self.options = None
         self.context = {}
     
-    def initialize(self, schema: SchemaNode, options: Dict[str, Any]) -> None:
+    def initialize(self, schema: SchemaNode, options: Any) -> None:
         """Initialize the strategy with a schema and options"""
         self.schema = schema
         self.options = options
         self.context = {}
     
     @abstractmethod
-    def generate_table(self, table: TableNode, options: Dict[str, Any]) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    def generate_table(self, table: TableNode, options: Any) -> Tuple[pd.DataFrame, Dict[str, Any]]:
         """
         Generate data for a table
         

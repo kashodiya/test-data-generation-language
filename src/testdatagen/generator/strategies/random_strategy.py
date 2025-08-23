@@ -38,18 +38,18 @@ class RandomStrategy(GenerationStrategy):
         super().__init__()
         self.random = random.Random()
     
-    def initialize(self, schema: SchemaNode, options: Dict[str, Any]) -> None:
+    def initialize(self, schema: SchemaNode, options: Any) -> None:
         """Initialize the strategy with a schema and options"""
         super().initialize(schema, options)
         
         # Set random seed if provided
-        if "seed" in options and options["seed"] is not None:
-            self.random.seed(options["seed"])
+        if hasattr(options, "seed") and options.seed is not None:
+            self.random.seed(options.seed)
     
-    def generate_table(self, table: TableNode, options: Dict[str, Any]) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+    def generate_table(self, table: TableNode, options: Any) -> Tuple[pd.DataFrame, Dict[str, Any]]:
         """Generate data for a table"""
         # Get record count
-        record_count = options.get("record_count", 100)
+        record_count = options.record_count if hasattr(options, "record_count") else 100
         
         # Generate data
         data = []
