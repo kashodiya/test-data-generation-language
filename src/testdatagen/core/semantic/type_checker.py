@@ -82,10 +82,49 @@ class TypeChecker:
                 message=f"Unknown base type: {node.base_type}",
                 node=node
             ))
+            return
+            
+        # Get the base type object
+        base_type = self.type_registry.get(node.base_type)
         
-        # Check constraints
+        # Check for circular references
+        if hasattr(base_type, 'base_type') and isinstance(base_type.base_type, str) and base_type.base_type == node.name:
+            self.errors.append(TypeCheckError(
+                message=f"Circular type reference detected: {node.name} -> {node.base_type} -> {node.name}",
+                node=node
+            ))
+            return
+            
+        # Check constraints are compatible with the base type
         for constraint in node.constraints:
             self._check_constraint(constraint)
+            self._check_constraint_compatibility_for_type(constraint, base_type, node)
+            
+    def _check_constraint_compatibility_for_type(self, constraint: ConstraintNode, base_type, type_node: TypeNode) -> None:
+        """Check if a constraint is compatible with a type's base type"""
+        constraint_type = constraint.constraint_type.lower()
+        base_type_name = base_type.name
+        
+        # Check pattern constraints are only applied to string types
+        if constraint_type == "pattern" and base_type_name != "string":
+            self.errors.append(TypeCheckError(
+                message=f"Pattern constraint can only be applied to string types, but custom type '{type_node.name}' has base type '{base_type_name}'",
+                node=constraint
+            ))
+            
+        # Check range constraints are only applied to numeric types
+        if constraint_type == "range" and base_type_name not in ["integer", "decimal"]:
+            self.errors.append(TypeCheckError(
+                message=f"Range constraint can only be applied to numeric types, but custom type '{type_node.name}' has base type '{base_type_name}'",
+                node=constraint
+            ))
+            
+        # Check length constraints are only applied to string or array types
+        if constraint_type == "length" and base_type_name not in ["string"] and not (hasattr(base_type, 'kind') and getattr(base_type, 'kind', None) == 'array'):
+            self.errors.append(TypeCheckError(
+                message=f"Length constraint can only be applied to string or array types, but custom type '{type_node.name}' has base type '{base_type_name}'",
+                node=constraint
+            ))
     
     def _check_table(self, node: TableNode) -> None:
         """Check types in a table node"""

@@ -90,11 +90,45 @@ class Validator:
             )
             return
             
-        # Validate constraints are appropriate for the base type
+        # Get the base type object
         base_type_obj = default_registry.get(node.base_type)
-        if base_type_obj:
-            for constraint in node.constraints:
-                self._validate_constraint_for_type(constraint, base_type_obj, node)
+        if not base_type_obj:
+            return
+            
+        # Check for circular references in custom types
+        if hasattr(base_type_obj, 'base_type'):
+            visited_types = set([node.name])
+            current_type = base_type_obj
+            
+            while hasattr(current_type, 'base_type') and isinstance(current_type.base_type, str):
+                base_type_name = current_type.base_type
+                
+                if base_type_name in visited_types:
+                    self.add_error(
+                        f"Circular type reference detected in type chain for '{node.name}'",
+                        node.line,
+                        node.column,
+                        "error"
+                    )
+                    return
+                    
+                visited_types.add(base_type_name)
+                current_type = default_registry.get(base_type_name)
+                if not current_type:
+                    break
+            
+        # Validate constraints are appropriate for the base type
+        for constraint in node.constraints:
+            self._validate_constraint_for_type(constraint, base_type_obj, node)
+            
+        # Validate that the type has at least one constraint or is different from its base type
+        if not node.constraints:
+            self.add_error(
+                f"Custom type '{node.name}' is identical to its base type '{node.base_type}'. Consider adding constraints or using the base type directly.",
+                node.line,
+                node.column,
+                "warning"
+            )
                 
     def _validate_constraint_for_type(self, constraint: ConstraintNode, base_type, type_node: TypeNode) -> None:
         """Validate that a constraint is appropriate for a type"""
@@ -140,6 +174,37 @@ class Validator:
     
     def _validate_field(self, node: FieldNode) -> None:
         """Validate a field node"""
+        # Check that the data type exists
+        from ..types.registry import default_registry
+        
+        if not default_registry.exists(node.data_type):
+            self.add_error(
+                f"Unknown data type '{node.data_type}' for field '{node.name}'",
+                node.line,
+                node.column,
+                "error"
+            )
+            return
+            
+        # Get the field's data type
+        field_type = default_registry.get(node.data_type)
+        
+        # If it's a custom type, check that its constraints don't conflict with field constraints
+        if field_type and hasattr(field_type, 'constraints') and field_type.constraints:
+            # Check for constraint conflicts between custom type and field
+            type_constraint_types = set(c.get('type', '').lower() for c in field_type.constraints)
+            field_constraint_types = set(c.constraint_type.lower() for c in node.constraints)
+            
+            # Find overlapping constraint types
+            overlapping = type_constraint_types.intersection(field_constraint_types)
+            if overlapping:
+                self.add_error(
+                    f"Field '{node.name}' has constraints that may conflict with its custom type '{node.data_type}': {', '.join(overlapping)}",
+                    node.line,
+                    node.column,
+                    "warning"
+                )
+        
         # Check for conflicting constraints
         self._check_conflicting_constraints(node)
     

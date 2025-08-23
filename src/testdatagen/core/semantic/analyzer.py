@@ -36,12 +36,35 @@ class SemanticAnalyzer:
         """Analyze an AST node"""
         self.errors = []
         
-        # Build symbol table
-        self._build_symbol_table(node)
-        
-        # Register custom types
+        # Process schema node specially to handle type declarations first
         if isinstance(node, SchemaNode):
+            # First, build symbols for the schema itself
+            self.symbol_table.add_symbol(Symbol(
+                name=node.name,
+                kind="schema",
+                source_line=node.line,
+                source_column=node.column
+            ))
+            
+            # Enter schema scope
+            self.symbol_table.enter_scope(node.name)
+            
+            # Process types first - build symbols for all types
+            for type_node in node.types:
+                self._build_type_symbols(type_node)
+            
+            # Register custom types after building their symbols
             self._register_custom_types(node)
+            
+            # Now process tables after types are registered
+            for table in node.tables:
+                self._build_symbol_table(table)
+                
+            # Exit schema scope
+            self.symbol_table.exit_scope()
+        else:
+            # For non-schema nodes, build symbol table normally
+            self._build_symbol_table(node)
         
         # Check types
         type_errors = self.type_checker.check(node)
@@ -62,7 +85,33 @@ class SemanticAnalyzer:
         
     def _register_custom_types(self, schema_node: SchemaNode) -> None:
         """Register custom types in the type registry"""
+        # First, validate that all base types exist
         for type_node in schema_node.types:
+            if not self.type_registry.exists(type_node.base_type):
+                self.errors.append(SemanticError(
+                    message=f"Unknown base type '{type_node.base_type}' for custom type '{type_node.name}'",
+                    line=type_node.line,
+                    column=type_node.column,
+                    severity="error"
+                ))
+                continue
+                
+            # Check for duplicate type names
+            if self.type_registry.exists(type_node.name):
+                self.errors.append(SemanticError(
+                    message=f"Type '{type_node.name}' is already defined",
+                    line=type_node.line,
+                    column=type_node.column,
+                    severity="error"
+                ))
+                continue
+                
+        # Then register the types if they're valid
+        for type_node in schema_node.types:
+            # Skip registration if the base type doesn't exist or the type name is already taken
+            if not self.type_registry.exists(type_node.base_type) or self.type_registry.exists(type_node.name):
+                continue
+                
             try:
                 self.type_registry.register_custom_type_from_ast(type_node)
             except ValueError as e:
@@ -88,27 +137,9 @@ class SemanticAnalyzer:
     
     def _build_schema_symbols(self, node: SchemaNode) -> None:
         """Build symbols for a schema node"""
-        # Add schema symbol
-        self.symbol_table.add_symbol(Symbol(
-            name=node.name,
-            kind="schema",
-            source_line=node.line,
-            source_column=node.column
-        ))
-        
-        # Enter schema scope
-        self.symbol_table.enter_scope(node.name)
-        
-        # Process types first (they need to be available for table fields)
-        for type_node in node.types:
-            self._build_symbol_table(type_node)
-        
-        # Process tables
-        for table in node.tables:
-            self._build_symbol_table(table)
-        
-        # Exit schema scope
-        self.symbol_table.exit_scope()
+        # This method is now handled directly in the analyze method
+        # to ensure proper ordering of type processing
+        pass
     
     def _build_type_symbols(self, node: TypeNode) -> None:
         """Build symbols for a type node"""
