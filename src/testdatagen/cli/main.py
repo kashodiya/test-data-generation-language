@@ -92,19 +92,19 @@ def validate(schema_file, validate_only):
     schema = result.ast
     console.print(f"\nSchema: [bold]{schema.name}[/bold]")
     
-    table = Table(title="Tables")
-    table.add_column("Table Name", style="cyan")
-    table.add_column("Fields", style="green")
-    table.add_column("Constraints", style="yellow")
+    summary_table = Table(title="Tables")
+    summary_table.add_column("Table Name", style="cyan")
+    summary_table.add_column("Fields", style="green")
+    summary_table.add_column("Constraints", style="yellow")
     
-    for table in schema.tables:
-        table.add_row(
-            table.name,
-            str(len(table.fields)),
-            str(len(table.constraints))
+    for table_node in schema.tables:
+        summary_table.add_row(
+            table_node.name,
+            str(len(table_node.fields)),
+            str(len(table_node.constraints))
         )
     
-    console.print(table)
+    console.print(summary_table)
 
 
 @main.command()

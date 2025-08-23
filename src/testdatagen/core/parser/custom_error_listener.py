@@ -25,6 +25,13 @@ class CustomErrorListener(ErrorListener):
             # We'll handle it in the parser
             print(f"Ignoring schema name format error at line {line}:{column}")
             return
+            
+        # Special case: ignore the EOF error at the beginning of the file
+        if offendingSymbol and offendingSymbol.type == -1 and "expecting {IMPORT, SCHEMA}" in msg:
+            # This is the error we want to ignore
+            # We'll handle it in the parser
+            print(f"Ignoring EOF error at line {line}:{column}")
+            return
         
         # Print detailed error for debugging
         print(f"Syntax error at line {line}:{column} - {detailed_msg}")

@@ -1,0 +1,11 @@
+schema TestSchema {
+    table TestTable {
+        field id: integer with primary key;
+        field name: string with not null;
+        
+        generate {
+            count = 10,
+            strategy = "faker"
+        };
+    }
+}

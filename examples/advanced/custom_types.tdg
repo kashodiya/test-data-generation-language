@@ -1,8 +1,3 @@
-
-
-
-
-
 schema AdvancedExample {
     // Custom type definitions
     type EmailType = string with pattern("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
@@ -127,7 +122,3 @@ schema AdvancedExample {
         };
     }
 }
-
-
-
-

@@ -79,7 +79,8 @@ class Parser:
             print(f"Manually parsed tables: {tables}")
             
             # For now, we'll just use the input text as is for the ANTLR parser
-            modified_text = input_text
+            # But we'll add a newline at the beginning to fix the EOF issue
+            modified_text = "\n" + input_text
             print("Modified input text:")
             print(modified_text[:200] + "..." if len(modified_text) > 200 else modified_text)
             
