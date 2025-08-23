@@ -40,6 +40,7 @@ from ..generator.strategies.random_strategy import RandomStrategy
 from ..generator.strategies.faker_strategy import FakerStrategy
 from ..export.formats.json_format import JsonExporter
 from ..export.formats.csv_format import CsvExporter
+from ..export.database.postgresql import PostgreSQLExporter
 
 
 console = Console()
@@ -111,11 +112,14 @@ def validate(schema_file, validate_only):
 @click.argument("schema_file", type=click.Path(exists=True, readable=True))
 @click.option("--count", "-c", default=100, help="Number of records to generate")
 @click.option("--output", "-o", default="output", help="Output directory")
-@click.option("--format", "-f", type=click.Choice(["json", "csv"]), default="json", help="Output format")
+@click.option("--format", "-f", type=click.Choice(["json", "csv", "postgresql"]), default="json", help="Output format")
 @click.option("--strategy", "-s", type=click.Choice(["random", "faker"]), default="faker", help="Generation strategy")
 @click.option("--seed", type=int, help="Random seed for reproducible generation")
 @click.option("--locale", default="en_US", help="Locale for Faker strategy")
-def generate(schema_file, count, output, format, strategy, seed, locale):
+@click.option("--pg-schema", default="public", help="PostgreSQL schema name (for PostgreSQL format)")
+@click.option("--pg-create-schema", is_flag=True, help="Create PostgreSQL schema (for PostgreSQL format)")
+@click.option("--pg-single-file", is_flag=True, help="Export all tables to a single SQL file (for PostgreSQL format)")
+def generate(schema_file, count, output, format, strategy, seed, locale, pg_schema, pg_create_schema, pg_single_file):
     """Generate test data from a schema file"""
     console.print(f"Generating test data from schema: [bold]{schema_file}[/bold]")
     
@@ -175,13 +179,82 @@ def generate(schema_file, count, output, format, strategy, seed, locale):
     
     if format == "json":
         exporter = JsonExporter()
-    else:  # csv
+        file_extension = "json"
+    elif format == "csv":
         exporter = CsvExporter()
+        file_extension = "csv"
+    else:  # postgresql
+        exporter = PostgreSQLExporter()
+        file_extension = "sql"
     
-    for table_name, df in result.data.items():
-        file_path = os.path.join(output, f"{table_name}.{format}")
-        exporter.export(df, file_path)
-        console.print(f"Exported [bold]{len(df)}[/bold] records to [bold]{file_path}[/bold]")
+    # Handle PostgreSQL special case for single file export
+    if format == "postgresql" and pg_single_file:
+        # Prepare options for PostgreSQL export
+        pg_options = {
+            "schema_name": pg_schema,
+            "create_schema": pg_create_schema,
+            "create_tables": True,
+            "transaction": True,
+            "single_file": True,
+            "primary_keys": {},
+            "foreign_keys": {},
+            "unique_constraints": {},
+            "check_constraints": {}
+        }
+        
+        # We don't have direct access to the AST in the result object
+        # So we'll use simpler options for now
+        # Primary keys can be inferred from the data
+        for table_name in result.data.keys():
+            if 'id' in result.data[table_name].columns:
+                pg_options["primary_keys"][table_name] = ['id']
+        
+        # Export all tables to a single file
+        file_path = os.path.join(output, f"all_tables.sql")
+        result_files = exporter.export_all(result.data, output, **pg_options)
+        
+        # Print export information
+        for table_name, path in result_files.items():
+            if table_name == "all_tables":
+                console.print(f"Exported all tables to [bold]{path}[/bold]")
+            elif table_name == "schema":
+                console.print(f"Created schema definition at [bold]{path}[/bold]")
+    else:
+        # Export each table separately
+        for table_name, df in result.data.items():
+            file_path = os.path.join(output, f"{table_name}.{file_extension}")
+            
+            # Add format-specific options
+            export_options = {}
+            if format == "postgresql":
+                export_options = {
+                    "table_name": table_name,
+                    "schema_name": pg_schema,
+                    "create_table": True,
+                    "transaction": True
+                }
+                
+                # Use simple heuristics for constraints
+                # Assume 'id' column is primary key if it exists
+                if 'id' in df.columns:
+                    export_options["primary_key"] = ['id']
+                
+                # Look for potential foreign keys based on column naming conventions
+                foreign_keys = {}
+                for col in df.columns:
+                    if col.endswith('_id') and col != 'id':
+                        # Extract the referenced table name from the column name
+                        referenced_table = col[:-3]  # Remove '_id' suffix
+                        # Capitalize first letter to match table naming convention
+                        referenced_table = referenced_table[0].upper() + referenced_table[1:]
+                        if referenced_table in result.data:
+                            foreign_keys[col] = (referenced_table, 'id')
+                
+                if foreign_keys:
+                    export_options["foreign_keys"] = foreign_keys
+            
+            exporter.export(df, file_path, **export_options)
+            console.print(f"Exported [bold]{len(df)}[/bold] records to [bold]{file_path}[/bold]")
     
     # Print statistics
     console.print("\n[bold]Generation Statistics:[/bold]")

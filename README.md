@@ -12,7 +12,7 @@ TDGL provides a declarative syntax for defining test data requirements, enabling
 - **Rich Type System**: Support for primitive types, composite types, and custom types
 - **Constraints**: Define value constraints, business rules, and relationships
 - **Data Generation**: Generate realistic test data using various strategies
-- **Export Formats**: Export generated data to JSON, CSV, and other formats
+- **Export Formats**: Export generated data to JSON, CSV, PostgreSQL SQL scripts, and other formats
 - **CLI Interface**: Command-line interface for validating schemas and generating data
 
 ## Installation
@@ -75,7 +75,14 @@ testdatagen validate schema.tdg
 3. Generate test data:
 
 ```bash
+# Generate JSON data
 testdatagen generate schema.tdg --count 100 --format json --output ./output
+
+# Generate CSV data
+testdatagen generate schema.tdg --count 100 --format csv --output ./output
+
+# Generate PostgreSQL SQL scripts
+testdatagen generate schema.tdg --format postgresql --output ./output --pg-schema myschema --pg-create-schema
 ```
 
 ## Schema Name Format
@@ -156,4 +163,25 @@ See the `examples` directory for more examples:
 
 - `examples/basic/simple_table.tdg`: A simple schema with basic tables and relationships
 - `examples/advanced/custom_types.tdg`: Advanced schema with custom types and complex constraints
+- `examples/postgresql/postgres_example.tdg`: Example schema for PostgreSQL export with database-specific features
+
+### PostgreSQL Export
+
+The PostgreSQL export feature allows you to generate SQL scripts that can be directly executed in PostgreSQL databases:
+
+```bash
+# Basic PostgreSQL export
+testdatagen generate schema.tdg --format postgresql --output ./output
+
+# With PostgreSQL-specific options
+testdatagen generate schema.tdg --format postgresql --output ./output \
+  --pg-schema myschema --pg-create-schema --pg-single-file
+```
+
+PostgreSQL-specific options:
+- `--pg-schema`: The PostgreSQL schema name (default: "public")
+- `--pg-create-schema`: Include schema creation statements
+- `--pg-single-file`: Export all tables to a single SQL file
+
+For more details, see the [PostgreSQL Export documentation](./examples/postgresql/README.md).
 

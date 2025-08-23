@@ -1,0 +1,70 @@
+
+schema PostgresExample {
+    table Customer {
+        field id: integer with primary key;
+        field first_name: string with not null;
+        field last_name: string with not null;
+        field email: string with not null;
+        field phone: string;
+        field created_at: timestamp with not null;
+        field is_active: boolean with default true;
+        
+        constraint unique(email);
+        
+        generate {
+            count = 50,
+            strategy = "faker"
+        };
+    }
+    
+    table Product {
+        field id: integer with primary key;
+        field name: string with not null;
+        field description: string;
+        field price: decimal with not null;
+        field stock_quantity: integer with not null;
+        field category: string;
+        
+        constraint check(price > 0);
+        constraint check(stock_quantity >= 0);
+        
+        generate {
+            count = 100,
+            strategy = "faker"
+        };
+    }
+    
+    table Order {
+        field id: integer with primary key;
+        field customer_id: integer with not null;
+        field order_date: timestamp with not null;
+        field status: string with not null;
+        field total_amount: decimal with not null;
+        
+        constraint foreign key(customer_id) references Customer(id);
+        constraint check(total_amount >= 0);
+        
+        generate {
+            count = 200,
+            strategy = "faker"
+        };
+    }
+    
+    table OrderItem {
+        field id: integer with primary key;
+        field order_id: integer with not null;
+        field product_id: integer with not null;
+        field quantity: integer with not null;
+        field unit_price: decimal with not null;
+        
+        constraint foreign key(order_id) references Order(id);
+        constraint foreign key(product_id) references Product(id);
+        constraint check(quantity > 0);
+        constraint check(unit_price >= 0);
+        
+        generate {
+            count = 500,
+            strategy = "faker"
+        };
+    }
+}
