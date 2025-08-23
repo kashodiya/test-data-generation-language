@@ -83,6 +83,18 @@ class TypeRegistry:
         
     def register_custom_type_from_ast(self, type_node) -> CustomType:
         """Register a custom type from an AST node"""
+        # Check if the type already exists
+        if self.exists(type_node.name):
+            raise ValueError(f"Type '{type_node.name}' is already registered")
+            
+        # Check if the base type exists
+        base_type = type_node.base_type
+        if not isinstance(base_type, str) and not isinstance(base_type, TypeBase):
+            raise ValueError(f"Invalid base type for '{type_node.name}': {base_type}")
+            
+        if isinstance(base_type, str) and not self.exists(base_type):
+            raise ValueError(f"Base type '{base_type}' for custom type '{type_node.name}' does not exist")
+        
         # Extract constraints from the AST node
         constraints = []
         for constraint in type_node.constraints:

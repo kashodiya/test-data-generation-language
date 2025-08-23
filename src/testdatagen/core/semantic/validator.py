@@ -79,10 +79,44 @@ class Validator:
         """Validate a type node"""
         # Check that the type has a valid base type
         from ..types.registry import default_registry
+        
+        # Validate the base type exists
         if not default_registry.exists(node.base_type):
-            # Check if it's a reference to another custom type
-            # This would be handled by the semantic analyzer
-            pass
+            self.add_error(
+                f"Base type '{node.base_type}' for custom type '{node.name}' does not exist",
+                node.line,
+                node.column,
+                "error"
+            )
+            return
+            
+        # Validate constraints are appropriate for the base type
+        base_type_obj = default_registry.get(node.base_type)
+        if base_type_obj:
+            for constraint in node.constraints:
+                self._validate_constraint_for_type(constraint, base_type_obj, node)
+                
+    def _validate_constraint_for_type(self, constraint: ConstraintNode, base_type, type_node: TypeNode) -> None:
+        """Validate that a constraint is appropriate for a type"""
+        constraint_type = constraint.constraint_type.lower()
+        
+        # Check pattern constraints are only applied to string types
+        if constraint_type == "pattern" and base_type.name != "string":
+            self.add_error(
+                f"Pattern constraint can only be applied to string types, but '{type_node.name}' has base type '{base_type.name}'",
+                constraint.line,
+                constraint.column,
+                "error"
+            )
+            
+        # Check range constraints are only applied to numeric types
+        if constraint_type == "range" and base_type.name not in ["integer", "decimal"]:
+            self.add_error(
+                f"Range constraint can only be applied to numeric types, but '{type_node.name}' has base type '{base_type.name}'",
+                constraint.line,
+                constraint.column,
+                "error"
+            )
     
     def _validate_table(self, node: TableNode) -> None:
         """Validate a table node"""

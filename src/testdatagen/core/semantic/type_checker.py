@@ -115,10 +115,55 @@ class TypeChecker:
                 message=f"Unknown data type: {node.data_type}",
                 node=node
             ))
+            return
+            
+        # Get the field's data type
+        field_type = self.type_registry.get(node.data_type)
+        
+        # If it's a custom type, check that its base type exists
+        if field_type and hasattr(field_type, 'base_type'):
+            base_type = field_type.base_type
+            if isinstance(base_type, str) and not self.type_registry.exists(base_type):
+                self.errors.append(TypeCheckError(
+                    message=f"Custom type '{node.data_type}' references unknown base type: {base_type}",
+                    node=node
+                ))
         
         # Check constraints
         for constraint in node.constraints:
             self._check_constraint(constraint)
+            
+        # Check if constraints are compatible with the field type
+        self._check_constraint_compatibility(node, field_type)
+        
+    def _check_constraint_compatibility(self, field_node: FieldNode, field_type) -> None:
+        """Check if constraints are compatible with the field type"""
+        # Get the base type if it's a custom type
+        base_type_name = field_type.name
+        if hasattr(field_type, 'base_type'):
+            base_type = field_type.base_type
+            if isinstance(base_type, str):
+                base_type_name = base_type
+            elif hasattr(base_type, 'name'):
+                base_type_name = base_type.name
+        
+        # Check each constraint for compatibility with the field type
+        for constraint in field_node.constraints:
+            constraint_type = constraint.constraint_type.lower()
+            
+            # Check pattern constraints are only applied to string types
+            if constraint_type == "pattern" and base_type_name != "string":
+                self.errors.append(TypeCheckError(
+                    message=f"Pattern constraint can only be applied to string types, but field '{field_node.name}' has type '{field_type.name}'",
+                    node=constraint
+                ))
+                
+            # Check range constraints are only applied to numeric types
+            if constraint_type == "range" and base_type_name not in ["integer", "decimal"]:
+                self.errors.append(TypeCheckError(
+                    message=f"Range constraint can only be applied to numeric types, but field '{field_node.name}' has type '{field_type.name}'",
+                    node=constraint
+                ))
     
     def _check_constraint(self, node: ConstraintNode) -> None:
         """Check types in a constraint node"""

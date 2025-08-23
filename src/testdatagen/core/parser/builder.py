@@ -253,13 +253,72 @@ class ASTBuilder(TestDataGenVisitor):
     
     def visitTypeConstraint(self, ctx: TestDataGenParser.TypeConstraintContext) -> ConstraintNode:
         """Visit a type constraint"""
-        constraint_expr = self.visitConstraintExpression(ctx.constraintExpression())
+        # Get the constraint expression
+        constraint_expr = None
+        if ctx.constraintExpression():
+            constraint_expr = self.visitConstraintExpression(ctx.constraintExpression())
         
+        # If we have a constraint expression, use it
+        if constraint_expr:
+            return ConstraintNode(
+                node_type=NodeType.CONSTRAINT,
+                name=constraint_expr.get("name", "unnamed_constraint"),
+                constraint_type=constraint_expr.get("type", "unknown"),
+                parameters=constraint_expr.get("parameters", {}),
+                line=ctx.start.line,
+                column=ctx.start.column
+            )
+        
+        # Otherwise, try to extract the constraint directly from the WITH clause
+        # This is a fallback for simpler constraints
+        constraint_text = ctx.getText()
+        if "with" in constraint_text.lower():
+            # Extract the constraint part after "with"
+            constraint_part = constraint_text.split("with", 1)[1].strip()
+            
+            # Try to determine the constraint type and parameters
+            if "pattern" in constraint_part.lower():
+                # Pattern constraint
+                pattern_value = constraint_part.split("(", 1)[1].rsplit(")", 1)[0]
+                return ConstraintNode(
+                    node_type=NodeType.CONSTRAINT,
+                    name="pattern_constraint",
+                    constraint_type="pattern",
+                    parameters={"pattern": pattern_value},
+                    line=ctx.start.line,
+                    column=ctx.start.column
+                )
+            elif "range" in constraint_part.lower():
+                # Range constraint
+                range_values = constraint_part.split("(", 1)[1].rsplit(")", 1)[0].split(",")
+                min_val = range_values[0].strip()
+                max_val = range_values[1].strip() if len(range_values) > 1 else None
+                return ConstraintNode(
+                    node_type=NodeType.CONSTRAINT,
+                    name="range_constraint",
+                    constraint_type="range",
+                    parameters={"min": min_val, "max": max_val},
+                    line=ctx.start.line,
+                    column=ctx.start.column
+                )
+            elif "check" in constraint_part.lower():
+                # Check constraint
+                check_expr = constraint_part.split("(", 1)[1].rsplit(")", 1)[0]
+                return ConstraintNode(
+                    node_type=NodeType.CONSTRAINT,
+                    name="check_constraint",
+                    constraint_type="check",
+                    parameters={"expression": check_expr},
+                    line=ctx.start.line,
+                    column=ctx.start.column
+                )
+        
+        # Default fallback
         return ConstraintNode(
             node_type=NodeType.CONSTRAINT,
-            name=constraint_expr.get("name", "unnamed_constraint"),
-            constraint_type=constraint_expr.get("type", "unknown"),
-            parameters=constraint_expr.get("parameters", {}),
+            name="unnamed_constraint",
+            constraint_type="unknown",
+            parameters={},
             line=ctx.start.line,
             column=ctx.start.column
         )
