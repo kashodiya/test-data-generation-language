@@ -1,0 +1,69 @@
+
+schema CustomTest {
+    // Custom type definitions
+    type Email = string with pattern("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    type Age = integer with range(18, 100);
+    type Salary = decimal with range(1000.00, 500000.00);
+    type Department = enum("Engineering", "Marketing", "Sales", "HR", "Finance");
+    
+    table Employee {
+        field id: integer with primary key;
+        field first_name: string with not null, length(2, 50);
+        field last_name: string with not null, length(2, 50);
+        field email: Email with not null;
+        field age: Age with not null;
+        field department: Department with not null;
+        field salary: Salary with not null;
+        field hire_date: date with not null;
+        field is_manager: boolean with default false;
+        
+        constraint unique(email);
+        constraint check(salary >= 1000.00);
+        
+        generate {
+            count = 50,
+            strategy = "faker",
+            seed = 12345
+        };
+    }
+    
+    table Project {
+        field id: integer with primary key;
+        field name: string with not null, length(5, 100);
+        field description: string with length(0, 500);
+        field start_date: date with not null;
+        field end_date: date;
+        field budget: decimal with range(5000.00, 1000000.00);
+        field manager_id: integer with not null;
+        
+        constraint foreign key(manager_id) references Employee(id);
+        constraint check(end_date > start_date);
+        
+        generate {
+            count = 20,
+            strategy = "faker",
+            seed = 12345
+        };
+    }
+    
+    table Assignment {
+        field id: integer with primary key;
+        field employee_id: integer with not null;
+        field project_id: integer with not null;
+        field role: string with not null;
+        field hours_allocated: integer with range(1, 40);
+        field start_date: date with not null;
+        field end_date: date;
+        
+        constraint foreign key(employee_id) references Employee(id);
+        constraint foreign key(project_id) references Project(id);
+        constraint unique(employee_id, project_id);
+        constraint check(end_date > start_date);
+        
+        generate {
+            count = 100,
+            strategy = "faker",
+            seed = 12345
+        };
+    }
+}
