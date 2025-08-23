@@ -1,6 +1,10 @@
 #!/bin/bash
-echo "SETTING UP USING: :test-data-generation-language/.openhands/setup.sh"
+echo "Setting up dev env..."
 echo "Current directory is: $(pwd)"
+chmod +x dev-setup/setup.sh
+./dev-setup/setup.sh
+echo "Dev env setup done!"
+
 
 # # setup.sh for Test Data Generation Language repository
 # # This script will be executed automatically by OpenHands when the repository is cloned
