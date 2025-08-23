@@ -7,7 +7,7 @@
 from typing import Dict, List, Optional, Any, Union, Tuple
 from pydantic import BaseModel
 
-from ..ast.nodes import ASTNode, SchemaNode, TableNode, FieldNode, ConstraintNode
+from ..ast.nodes import ASTNode, SchemaNode, TableNode, FieldNode, ConstraintNode, TypeNode
 from ..types.registry import TypeRegistry, default_registry
 from .symbol_table import SymbolTable, Symbol
 
@@ -33,6 +33,8 @@ class TypeChecker:
         
         if isinstance(node, SchemaNode):
             self._check_schema(node)
+        elif isinstance(node, TypeNode):
+            self._check_type(node)
         elif isinstance(node, TableNode):
             self._check_table(node)
         elif isinstance(node, FieldNode):
@@ -44,6 +46,20 @@ class TypeChecker:
     
     def _check_schema(self, node: SchemaNode) -> None:
         """Check types in a schema node"""
+        # Check for duplicate type names
+        type_names = set()
+        for type_node in node.types:
+            if type_node.name in type_names:
+                self.errors.append(TypeCheckError(
+                    message=f"Duplicate type name: {type_node.name}",
+                    node=type_node
+                ))
+            else:
+                type_names.add(type_node.name)
+            
+            # Check each type
+            self._check_type(type_node)
+        
         # Check for duplicate table names
         table_names = set()
         for table in node.tables:
@@ -57,6 +73,19 @@ class TypeChecker:
             
             # Check each table
             self._check_table(table)
+            
+    def _check_type(self, node: TypeNode) -> None:
+        """Check types in a type node"""
+        # Check that the base type exists
+        if not self.type_registry.exists(node.base_type):
+            self.errors.append(TypeCheckError(
+                message=f"Unknown base type: {node.base_type}",
+                node=node
+            ))
+        
+        # Check constraints
+        for constraint in node.constraints:
+            self._check_constraint(constraint)
     
     def _check_table(self, node: TableNode) -> None:
         """Check types in a table node"""

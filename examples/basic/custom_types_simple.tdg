@@ -1,0 +1,19 @@
+
+schema SimpleCustomTypes {
+    // Define custom types
+    type Email = string with CHECK(LIKE '%@%.%');
+    type PositiveInteger = integer with CHECK(> 0);
+    
+    // Use custom types in tables
+    table Users {
+        field id: integer NOT NULL;
+        field email: Email NOT NULL;
+        field age: PositiveInteger NULL;
+        
+        constraint PRIMARY KEY(id);
+        
+        generate {
+            rows = 5
+        };
+    }
+}

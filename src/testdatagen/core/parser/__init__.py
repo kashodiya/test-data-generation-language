@@ -56,6 +56,16 @@ class Parser:
             schema_match = re.search(r'schema\s+(\w+)\s*{', input_text)
             schema_name = schema_match.group(1) if schema_match else "DefaultSchema"
             
+            # Extract type declarations
+            types = []
+            # Match both simple types and enum types
+            type_matches = re.finditer(r'type\s+(\w+)\s*=\s*(\w+)(?:\s+with|\s*;|\s*\()', input_text)
+            
+            for type_match in type_matches:
+                type_name = type_match.group(1)
+                base_type = type_match.group(2)
+                types.append((type_name, base_type))
+            
             # Extract tables
             tables = []
             table_matches = re.finditer(r'table\s+(\w+)\s*{(.*?)(?=\n\s*})', input_text, re.DOTALL)
@@ -76,6 +86,7 @@ class Parser:
                 tables.append((table_name, fields))
             
             print(f"Manually parsed schema: {schema_name}")
+            print(f"Manually parsed types: {types}")
             print(f"Manually parsed tables: {tables}")
             
             # For now, we'll just use the input text as is for the ANTLR parser
@@ -137,9 +148,22 @@ class Parser:
             # Build AST from parse tree
             ast = self.builder.visit(parse_tree)
             
-            # If the AST has no tables, use our manually parsed schema and tables
+            # If the AST has no tables, use our manually parsed schema, types, and tables
             if not ast.tables and tables:
-                from ..ast.nodes import SchemaNode, TableNode, FieldNode, NodeType
+                from ..ast.nodes import SchemaNode, TableNode, FieldNode, TypeNode, NodeType
+                
+                # Create type nodes
+                type_nodes = []
+                for type_name, base_type in types:
+                    type_node = TypeNode(
+                        node_type=NodeType.TYPE,
+                        name=type_name,
+                        base_type=base_type,
+                        constraints=[],
+                        line=0,
+                        column=0
+                    )
+                    type_nodes.append(type_node)
                 
                 # Create field nodes
                 table_nodes = []
@@ -169,6 +193,7 @@ class Parser:
                 ast = SchemaNode(
                     node_type=NodeType.SCHEMA,
                     name=schema_name,
+                    types=type_nodes,
                     tables=table_nodes,
                     line=0,
                     column=0
@@ -177,6 +202,7 @@ class Parser:
             # Debug: Print AST structure
             print("AST Structure:")
             print(f"Schema name: {ast.name}")
+            print(f"Types: {[t.name for t in ast.types]}")
             print(f"Tables: {[t.name for t in ast.tables]}")
             
             return ParseResult(

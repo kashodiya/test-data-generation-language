@@ -9,6 +9,7 @@ class NodeType(str, Enum):
     TABLE = "table"
     FIELD = "field"
     CONSTRAINT = "constraint"
+    TYPE = "type"
 
 
 class ASTNode(BaseModel):
@@ -41,8 +42,16 @@ class TableNode(ASTNode):
     constraints: List[ConstraintNode] = Field(default_factory=list)
 
 
+class TypeNode(ASTNode):
+    """Type definition within a schema"""
+    name: str
+    base_type: str
+    constraints: List[ConstraintNode] = Field(default_factory=list)
+
+
 class SchemaNode(ASTNode):
     """Root node for a schema definition"""
     name: str
+    types: List[TypeNode] = Field(default_factory=list)
     tables: List[TableNode]
     imports: List[str] = Field(default_factory=list)

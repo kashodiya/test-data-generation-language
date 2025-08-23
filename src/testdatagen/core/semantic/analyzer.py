@@ -8,8 +8,9 @@
 from typing import Dict, List, Optional, Any, Union
 from pydantic import BaseModel
 
-from ..ast.nodes import ASTNode, SchemaNode, TableNode, FieldNode, ConstraintNode, NodeType
+from ..ast.nodes import ASTNode, SchemaNode, TableNode, FieldNode, ConstraintNode, TypeNode, NodeType
 from ..types.registry import TypeRegistry, default_registry
+from ..types.custom import CustomType
 from .symbol_table import SymbolTable, Symbol
 from .type_checker import TypeChecker, TypeCheckError
 
@@ -27,6 +28,7 @@ class SemanticAnalyzer:
     
     def __init__(self, type_registry: TypeRegistry = default_registry):
         self.symbol_table = SymbolTable()
+        self.type_registry = type_registry
         self.type_checker = TypeChecker(self.symbol_table, type_registry)
         self.errors: List[SemanticError] = []
         
@@ -36,6 +38,10 @@ class SemanticAnalyzer:
         
         # Build symbol table
         self._build_symbol_table(node)
+        
+        # Register custom types
+        if isinstance(node, SchemaNode):
+            self._register_custom_types(node)
         
         # Check types
         type_errors = self.type_checker.check(node)
@@ -53,11 +59,26 @@ class SemanticAnalyzer:
         self._validate_constraints(node)
         
         return self.errors
+        
+    def _register_custom_types(self, schema_node: SchemaNode) -> None:
+        """Register custom types in the type registry"""
+        for type_node in schema_node.types:
+            try:
+                self.type_registry.register_custom_type_from_ast(type_node)
+            except ValueError as e:
+                self.errors.append(SemanticError(
+                    message=str(e),
+                    line=type_node.line,
+                    column=type_node.column,
+                    severity="error"
+                ))
     
     def _build_symbol_table(self, node: ASTNode) -> None:
         """Build the symbol table from an AST node"""
         if node.node_type == NodeType.SCHEMA:
             self._build_schema_symbols(node)
+        elif node.node_type == NodeType.TYPE:
+            self._build_type_symbols(node)
         elif node.node_type == NodeType.TABLE:
             self._build_table_symbols(node)
         elif node.node_type == NodeType.FIELD:
@@ -78,12 +99,34 @@ class SemanticAnalyzer:
         # Enter schema scope
         self.symbol_table.enter_scope(node.name)
         
+        # Process types first (they need to be available for table fields)
+        for type_node in node.types:
+            self._build_symbol_table(type_node)
+        
         # Process tables
         for table in node.tables:
             self._build_symbol_table(table)
         
         # Exit schema scope
         self.symbol_table.exit_scope()
+    
+    def _build_type_symbols(self, node: TypeNode) -> None:
+        """Build symbols for a type node"""
+        # Add type symbol
+        self.symbol_table.add_symbol(Symbol(
+            name=node.name,
+            kind="type",
+            type=node.base_type,
+            attributes={
+                "constraints": [c.name for c in node.constraints]
+            },
+            source_line=node.line,
+            source_column=node.column
+        ))
+        
+        # Process constraints
+        for constraint in node.constraints:
+            self._build_symbol_table(constraint)
     
     def _build_table_symbols(self, node: TableNode) -> None:
         """Build symbols for a table node"""

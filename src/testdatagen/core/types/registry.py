@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Union, Any
 from pydantic import BaseModel
 
 from .primitive import TypeBase, PrimitiveType, PrimitiveTypeKind, TypeCategory
-from .composite import CompositeType, ArrayType, ObjectType, EnumType
+from .composite import CompositeType, ArrayType, ObjectType, EnumType, CompositeTypeKind
 from .custom import CustomType
 
 
@@ -27,6 +27,15 @@ class TypeRegistry:
         self.register(PrimitiveType.binary())
         self.register(PrimitiveType.uuid())
         self.register(PrimitiveType.json())
+        
+        # Register enum as a special type
+        from .composite import EnumType, EnumValue
+        self.register(EnumType(
+            name="enum",
+            values=[],
+            category=TypeCategory.COMPOSITE,
+            kind=CompositeTypeKind.ENUM
+        ))
     
     def register(self, type_def: TypeBase) -> None:
         """Register a type in the registry"""
@@ -66,11 +75,29 @@ class TypeRegistry:
         self.register(enum_type)
         return enum_type
     
-    def create_custom_type(self, name: str, base_type: Union[TypeBase, str], **kwargs) -> CustomType:
+    def create_custom_type(self, name: str, base_type: Union[TypeBase, str], constraints: Optional[List[Dict[str, Any]]] = None, **kwargs) -> CustomType:
         """Create and register a custom type"""
-        custom_type = CustomType.create(name, base_type, **kwargs)
+        custom_type = CustomType.create(name, base_type, constraints=constraints, **kwargs)
         self.register(custom_type)
         return custom_type
+        
+    def register_custom_type_from_ast(self, type_node) -> CustomType:
+        """Register a custom type from an AST node"""
+        # Extract constraints from the AST node
+        constraints = []
+        for constraint in type_node.constraints:
+            constraints.append({
+                "type": constraint.constraint_type,
+                "parameters": constraint.parameters
+            })
+            
+        # Create and register the custom type
+        return self.create_custom_type(
+            name=type_node.name,
+            base_type=type_node.base_type,
+            constraints=constraints,
+            description=f"Custom type defined in schema"
+        )
     
     def resolve_type_reference(self, type_ref: Union[TypeBase, str]) -> Optional[TypeBase]:
         """Resolve a type reference to a concrete type"""

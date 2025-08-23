@@ -8,7 +8,7 @@ from .generated.TestDataGenParser import TestDataGenParser
 from .generated.TestDataGenVisitor import TestDataGenVisitor
 
 from ..ast.nodes import (
-    ASTNode, SchemaNode, TableNode, FieldNode, ConstraintNode, 
+    ASTNode, SchemaNode, TableNode, FieldNode, ConstraintNode, TypeNode,
     NodeType
 )
 
@@ -100,6 +100,18 @@ class ASTBuilder(TestDataGenVisitor):
         
         print(f"Schema name: {schema_name}")
         
+        # Get the type declarations
+        types = []
+        if ctx and hasattr(ctx, 'typeDeclaration') and ctx.typeDeclaration():
+            print(f"Number of type declarations: {len(ctx.typeDeclaration())}")
+            for i, type_ctx in enumerate(ctx.typeDeclaration()):
+                print(f"Type declaration {i}: {type_ctx}")
+                type_node = self.visitTypeDeclaration(type_ctx)
+                print(f"Processed type: {type_node}")
+                types.append(type_node)
+        else:
+            print("No type declarations found")
+        
         # Get the tables
         tables = []
         print(f"Table declarations: {ctx.tableDeclaration() if ctx and hasattr(ctx, 'tableDeclaration') else 'None'}")
@@ -121,10 +133,13 @@ class ASTBuilder(TestDataGenVisitor):
             print("No table declarations found")
         
         print(f"Tables after processing: {tables}")
-                # Create a schema node with the parsed information
+        print(f"Types after processing: {types}")
+        
+        # Create a schema node with the parsed information
         schema_node = SchemaNode(
             node_type=NodeType.SCHEMA,
             name=schema_name,
+            types=types,
             tables=tables,
             line=ctx.start.line if ctx and hasattr(ctx, 'start') else 0,
             column=ctx.start.column if ctx and hasattr(ctx, 'start') else 0
@@ -132,6 +147,7 @@ class ASTBuilder(TestDataGenVisitor):
         
         print(f"Schema after visiting: {schema_node}")
         print(f"Schema tables: {schema_node.tables}")
+        print(f"Schema types: {schema_node.types}")
         
         return schema_node
     
@@ -207,6 +223,43 @@ class ASTBuilder(TestDataGenVisitor):
             nullable=nullable,
             default_value=default_value,
             constraints=constraints,
+            line=ctx.start.line,
+            column=ctx.start.column
+        )
+    
+    def visitTypeDeclaration(self, ctx: TestDataGenParser.TypeDeclarationContext) -> TypeNode:
+        """Visit a type declaration"""
+        # Get the type name
+        type_name = ctx.ID().getText()
+        
+        # Get the base data type
+        base_type = self.visitDataType(ctx.dataType())
+        
+        # Get constraints
+        constraints = []
+        if hasattr(ctx, 'typeConstraint'):
+            for constraint_ctx in ctx.typeConstraint():
+                constraint = self.visitTypeConstraint(constraint_ctx)
+                constraints.append(constraint)
+        
+        return TypeNode(
+            node_type=NodeType.TYPE,
+            name=type_name,
+            base_type=base_type,
+            constraints=constraints,
+            line=ctx.start.line,
+            column=ctx.start.column
+        )
+    
+    def visitTypeConstraint(self, ctx: TestDataGenParser.TypeConstraintContext) -> ConstraintNode:
+        """Visit a type constraint"""
+        constraint_expr = self.visitConstraintExpression(ctx.constraintExpression())
+        
+        return ConstraintNode(
+            node_type=NodeType.CONSTRAINT,
+            name=constraint_expr.get("name", "unnamed_constraint"),
+            constraint_type=constraint_expr.get("type", "unknown"),
+            parameters=constraint_expr.get("parameters", {}),
             line=ctx.start.line,
             column=ctx.start.column
         )

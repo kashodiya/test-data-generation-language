@@ -14,7 +14,15 @@ importDeclaration
     ;
 
 schemaDeclaration
-    : SCHEMA ID LBRACE tableDeclaration* RBRACE
+    : SCHEMA ID LBRACE typeDeclaration* tableDeclaration* RBRACE
+    ;
+
+typeDeclaration
+    : TYPE ID ASSIGN dataType typeConstraint* SEMI
+    ;
+
+typeConstraint
+    : WITH constraintExpression
     ;
 
 tableDeclaration

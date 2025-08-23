@@ -9,7 +9,7 @@
 from typing import Dict, List, Optional, Any, Union
 from pydantic import BaseModel
 
-from ..ast.nodes import ASTNode, SchemaNode, TableNode, FieldNode, ConstraintNode, NodeType
+from ..ast.nodes import ASTNode, SchemaNode, TableNode, FieldNode, ConstraintNode, TypeNode, NodeType
 from ..constraints.base import Constraint, ConstraintViolation
 from .analyzer import SemanticAnalyzer, SemanticError
 
@@ -52,6 +52,8 @@ class Validator:
         # Validate the node
         if node.node_type == NodeType.SCHEMA:
             self._validate_schema(node)
+        elif node.node_type == NodeType.TYPE:
+            self._validate_type(node)
         elif node.node_type == NodeType.TABLE:
             self._validate_table(node)
         elif node.node_type == NodeType.FIELD:
@@ -65,9 +67,22 @@ class Validator:
         if not node.tables:
             self.add_error("Schema must have at least one table", node.line, node.column, "warning")
         
+        # Validate each type
+        for type_node in node.types:
+            self._validate_type(type_node)
+        
         # Validate each table
         for table in node.tables:
             self._validate_table(table)
+            
+    def _validate_type(self, node: TypeNode) -> None:
+        """Validate a type node"""
+        # Check that the type has a valid base type
+        from ..types.registry import default_registry
+        if not default_registry.exists(node.base_type):
+            # Check if it's a reference to another custom type
+            # This would be handled by the semantic analyzer
+            pass
     
     def _validate_table(self, node: TableNode) -> None:
         """Validate a table node"""
